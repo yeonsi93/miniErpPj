@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <title>입·출고 히스토리</title>
+    <style>
+        table{border-collapse:collapse;width:100%}
+        th,td{border:1px solid #ddd;padding:8px}
+        .toolbar{display:flex;gap:8px;align-items:center;margin:10px 0}
+    </style>
+</head>
+<body>
+<h1>입·출고 히스토리</h1>
+<p><a href="/materials">← 목록</a></p>
+
+<div class="toolbar">
+    <input type="hidden" id="materialId" th:value="${materialId}">
+    <select id="typeFilter">
+        <option value="">전체</option>
+        <option value="RECEIVE">입고</option>
+        <option value="RELEASE">출고</option>
+    </select>
+    <input id="minQty" type="number" min="0" placeholder="수량 ≥" style="width:120px">
+    <button onclick="load()">조회</button>
+</div>
+
+<table id="tbl">
+    <thead><tr><th>ID</th><th>유형</th><th>수량</th><th>일시</th></tr></thead>
+    <tbody><tr><td colspan="4">불러오는 중...</td></tr></tbody>
+</table>
+
+<script>
+    function fmtDate(iso){ return (iso||'').toString().replace('T',' ').slice(0,16); }
+
+    async function load(){
+        const id = document.getElementById('materialId').value;
+        const tbody = document.querySelector('#tbl tbody');
+        tbody.innerHTML = `<tr><td colspan="4">조회 중...</td></tr>`;
+        try{
+            const res = await fetch(`/api/materials/${id}/history`);
+            if(!res.ok) throw new Error();
+            let list = await res.json();
+            const t = document.getElementById('typeFilter').value;
+            const q = Number(document.getElementById('minQty').value||0);
+            if(t) list = list.filter(x=>x.type===t);
+            if(q>0) list = list.filter(x=>(x.quantity??0)>=q);
+
+            if(list.length===0){ tbody.innerHTML = `<tr><td colspan="4">내역 없음</td></tr>`; return; }
+            tbody.innerHTML = list.map(h=>`
+      <tr>
+        <td>${h.id}</td><td>${h.type}</td><td>${h.quantity}</td><td>${fmtDate(h.createdAt)}</td>
+      </tr>
+    `).join('');
+        }catch(e){ tbody.innerHTML = `<tr><td colspan="4">불러오기 실패</td></tr>`; }
+    }
+    document.addEventListener('DOMContentLoaded', load);
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <title>자재 입고</title>
+    <style>
+        form{max-width:400px} label{display:block;margin:10px 0 4px}
+        input,button{width:100%;padding:10px;box-sizing:border-box}
+    </style>
+</head>
+<body>
+<h1>자재 입고</h1>
+<p><a href="/materials">← 목록</a></p>
+
+<form onsubmit="submitReceive(event)">
+    <input type="hidden" id="materialId" th:value="${materialId}">
+    <label>입고 수량</label>
+    <input id="quantity" type="number" min="1" step="1" required>
+    <button type="submit" style="margin-top:10px">입고 처리</button>
+</form>
+
+<script>
+    async function submitReceive(e){
+        e.preventDefault();
+        const body = {
+            materialId: Number(document.getElementById('materialId').value),
+            quantity: Number(document.getElementById('quantity').value)
+        };
+        const res = await fetch('/api/materials/receive', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(body)
+        });
+        if(res.ok){ alert('입고 완료'); location.href='/materials'; }
+        else alert('입고 실패');
+    }
+</script>
+</body>
+</html>
